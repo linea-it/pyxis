@@ -1,0 +1,8 @@
+.vscode
+env
+__pycache__
+*.sqlite3*
+*.pyc
+
+docker-compose.yml
+global-env
