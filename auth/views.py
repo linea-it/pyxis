@@ -1,10 +1,10 @@
 import ldap
 from flask import request, render_template, flash, redirect, \
-    url_for, Blueprint, g
-from flask.ext.login import current_user, login_user, \
+    url_for, Blueprint, g, Response
+from flask_login import current_user, login_user, \
     logout_user, login_required
-from app import login_manager, db
-from app.auth.models import User, LoginForm
+from pyxis import login_manager, db
+from pyxis.auth.models import User, LoginForm
  
 auth = Blueprint('auth', __name__)
  
@@ -21,16 +21,34 @@ def get_current_user():
  
 @auth.route('/')
 @auth.route('/home')
+@login_required
 def home():
-    return render_template('home.html')
- 
+    # return render_template('home.html')
+    return Response('Login OK', 200, {})
+
+
+@auth.route('/check')
+def check():
+    print('___---> USER')
+    print(current_user)
+    print(request)
+    print(request.form)
+    if current_user.is_authenticated:
+        flash('You are already logged in.')
+        # return redirect(url_for('auth.home'))
+        return Response('Login OK', 200, {})
+
+    return Response('No authenticated', 401, {})
+
  
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated():
+
+    if current_user.is_authenticated:
         flash('You are already logged in.')
-        return redirect(url_for('auth.home'))
- 
+        # return redirect(url_for('auth.home'))
+        return Response('Login OK', 200, {})
+    
     form = LoginForm(request.form)
  
     if request.method == 'POST' and form.validate():
@@ -44,16 +62,20 @@ def login():
                 'Invalid username or password. Please try again.',
                 'danger')
             return render_template('login.html', form=form)
+            # return Response('Invalid username or password', 401, {})
  
         user = User.query.filter_by(username=username).first()
  
         if not user:
+            print('NAO TEM USER!!!!!!')
             user = User(username, password)
             db.session.add(user)
             db.session.commit()
+        else:
+            print('JA TEM USER')
         login_user(user)
         flash('You have successfully logged in.', 'success')
-        return redirect(url_for('auth.home'))
+        return Response('Login OK', 200, {})
  
     if form.errors:
         flash(form.errors, 'danger')
@@ -65,4 +87,4 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('auth.home'))
+    return redirect(url_for('auth.login'))

@@ -2,9 +2,14 @@ import ldap
 from flask_wtf import Form
 from wtforms import TextField, PasswordField
 from wtforms.validators import InputRequired
-from app import db, app
+from pyxis import db, app
  
- 
+fake_users = [
+    {'username': 'singulani', 'password': '12345'},
+    {'username': 'zeze', 'password': '00000'}
+]
+
+
 def get_ldap_connection():
     conn = ldap.initialize(app.config['LDAP_PROVIDER_URL'])
     return conn
@@ -19,11 +24,19 @@ class User(db.Model):
  
     @staticmethod
     def try_login(username, password):
-        conn = get_ldap_connection()
-        conn.simple_bind_s(
-            "uid="+username+",ou=people,dc=des-brazil,dc=org",
-            password
-        )
+        #conn = get_ldap_connection()
+        #conn.simple_bind_s(
+        #    "uid="+username+",ou=people,dc=des-brazil,dc=org",
+        #    password
+        #)
+
+        for user in fake_users:
+            print(user)
+            if user.get('username') == username and user.get('password') == password:
+                return True
+
+        raise ldap.INVALID_CREDENTIALS
+
  
     def is_authenticated(self):
         return True
@@ -35,7 +48,7 @@ class User(db.Model):
         return False
  
     def get_id(self):
-        return unicode(self.id)
+        return self.id
  
  
 class LoginForm(Form):

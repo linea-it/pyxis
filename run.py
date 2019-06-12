@@ -1,3 +1,3 @@
-from app import app
+from pyxis import app
 
 app.run(debug=True)
